@@ -6,7 +6,7 @@ import path from "node:path";
 import { Marked, type Tokens } from "marked";
 import { createHighlighter, type ThemeRegistration } from "shiki";
 
-import { REPO_BLOB, href, keyForFile, page as findPage } from "../docs/content";
+import { REPO_BLOB, href, keyForFile, page as findPage, withBase } from "../docs/content";
 import type { Lang, Strings } from "../docs/i18n";
 import { type ChatStrings, type PageScenes, esc, transcript } from "./chat";
 import { glassIcon } from "./glass";
@@ -111,6 +111,18 @@ function resolveLink(raw: string, opts: RenderOptions): string {
   return REPO_BLOB + repoPath.replace(/^(\.\.\/)+/, "") + (hash ? `#${hash}` : "");
 }
 
+function resolveAsset(raw: string, opts: RenderOptions): string {
+  if (/^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i.test(raw)) return raw;
+  const [, target, suffix] = raw.match(/^([^?#]*)(.*)$/)!;
+  const relative = target.startsWith("/docs/")
+    ? target.slice("/docs/".length)
+    : path.posix.normalize(path.posix.join(path.posix.dirname(opts.file), target));
+  if (relative.startsWith("assets/")) {
+    return withBase("docs-assets/" + relative.slice("assets/".length)) + suffix;
+  }
+  return resolveLink(raw, opts);
+}
+
 export function renderMarkdown(markdown: string, opts: RenderOptions): Rendered {
   const headings: Heading[] = [];
   const ids = new Set<string>();
@@ -155,6 +167,18 @@ export function renderMarkdown(markdown: string, opts: RenderOptions): Rendered 
         const external = /^https?:/.test(target);
         const title = tok.title ? ` title="${esc(tok.title)}"` : "";
         return `<a href="${esc(target)}"${title}${external ? ' target="_blank" rel="noopener"' : ""}>${inner}</a>`;
+      },
+      image(tok: Tokens.Image) {
+        const title = tok.title ? ` title="${esc(tok.title)}"` : "";
+        return `<img src="${esc(resolveAsset(tok.href, opts))}" alt="${esc(tok.text)}"${title} loading="lazy">`;
+      },
+      html(tok: Tokens.HTML | Tokens.Tag) {
+        // Upstream also embeds images as HTML (e.g. the first-release cake).
+        return tok.text.replace(/\b(src|href)=(["'])([^"']+)\2/gi, (attribute, name, quote, value) => {
+          return name.toLowerCase() === "src"
+            ? `${name}=${quote}${esc(resolveAsset(value, opts))}${quote}`
+            : attribute;
+        });
       },
       table(tok: Tokens.Table) {
         const cell = (c: Tokens.TableCell, tag: "th" | "td") =>

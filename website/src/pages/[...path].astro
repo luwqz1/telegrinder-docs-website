@@ -1,6 +1,6 @@
 ---
 import Chat from "../components/Chat.astro";
-import { href, pages, readingOrder } from "../docs/content";
+import { href, pages, readingOrder, tutorialChapters } from "../docs/content";
 import { LANGS, type Lang, T } from "../docs/i18n";
 import Base from "../layouts/Base.astro";
 import { glassIcon, iconFor } from "../render/glass";
@@ -37,7 +37,7 @@ const next = at >= 0 && at < order.length - 1 ? order[at + 1] : undefined;
 
 const numeral = page.number !== null ? String(page.number).padStart(2, "0") : page.section === "tools" ? "TL" : "RF";
 const facts = [
-  page.number !== null ? [s.chapter, `${page.number} / 12`] : [s.section, page.section === "tools" ? s.tools : s.reference],
+  page.number !== null ? [s.chapter, `${page.number} / ${tutorialChapters(lang).length}`] : [s.section, page.section === "tools" ? s.tools : s.reference],
   [s.time, `${page.minutes} ${s.min}`],
   [s.code, String(page.codeCount)],
   ...(page.contentLang !== lang ? [[s.lang, s.englishOnly]] : []),

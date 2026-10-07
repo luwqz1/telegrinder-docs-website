@@ -1,0 +1,25 @@
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    server_tokens off;
+    # Keep redirects relative when a reverse proxy or port mapping changes the origin.
+    absolute_redirect off;
+
+    # Keep HTML fresh; only Astro's content-hashed assets are immutable.
+    add_header Cache-Control "no-cache" always;
+    error_page 404 __BASE__/404.html;
+
+    __BASE_REDIRECT__
+    __OUTSIDE_BASE__
+
+    location ^~ __BASE__/_astro/ {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    location __BASE__/ {
+        try_files $uri $uri/ $uri.html =404;
+    }
+}

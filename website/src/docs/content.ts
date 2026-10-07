@@ -1,5 +1,4 @@
-// Reads the Markdown in ../docs at build time and turns it into routable pages.
-// Nothing here is copied: the docs folder stays the single source of truth.
+// Reads an upstream snapshot (or an explicit local checkout) at build time.
 import fs from "node:fs";
 import path from "node:path";
 
@@ -26,21 +25,9 @@ export interface DocPage {
   inNav: boolean;
 }
 
-export const DOCS_DIR = path.resolve(process.cwd(), process.env.TELEGRINDER_DOCS_DIR ?? "../docs");
+export const DOCS_DIR = path.resolve(process.cwd(), process.env.TELEGRINDER_DOCS_DIR ?? ".cache/telegrinder/docs");
 export const REPO_BLOB = "https://github.com/timoniq/telegrinder/blob/dev/";
 
-const SHORT: Record<Lang, Record<string, string>> = {
-  en: {
-    "1_setting_up": "Setting up", "2_rules": "Rules", "3_functional_bits": "Functional bits", "4_api": "Telegram API",
-    "5_nodes": "Nodes", "6_dispatch": "Dispatch", "7_keyboard": "Keyboards", "8_text": "Text and i18n", "9_states": "States",
-    "10_media": "Media", "11_handling_errors": "Handling errors", "12_out-of-box_scenarios": "Ready-made scenarios",
-  },
-  ru: {
-    "1_setting_up": "Запускаемся", "2_rules": "Правила", "3_functional_bits": "Функциональные штучки", "4_api": "Telegram API",
-    "5_nodes": "Ноды", "6_dispatch": "Dispatch", "7_keyboard": "Клавиатуры", "8_text": "Текст и локализация", "9_states": "Стейты",
-    "10_media": "Медиа", "11_handling_errors": "Обработка ошибок", "12_out-of-box_scenarios": "Готовые сценарии",
-  },
-};
 const REFERENCE_SHORT: Record<Lang, Record<string, string>> = {
   en: { api: "API", changelog: "Changelog", community: "Community" },
   ru: { api: "API", changelog: "Изменения", community: "Сообщество" },
@@ -110,7 +97,7 @@ export function pages(lang: Lang): DocPage[] {
     const slug = stem.replace(/^\d+_/, "").replace(/_/g, "-");
     out.push(make({
       key: `tutorial/${stem}`, section: "tutorial", route: `tutorial/${slug}/`, file: `${tutorialDir}/${f}`,
-      contentLang: tutorialLang, number: n, short: SHORT[lang][stem], inNav: true,
+      contentLang: tutorialLang, number: n, inNav: true,
     }));
   }
 

@@ -1,0 +1,26 @@
+services:
+  development:
+    build:
+      context: .
+      target: development
+    ports:
+      - "4321:4321"
+    environment:
+      SITE_URL: ${SITE_URL:-http://localhost:4321}
+      BASE_PATH: ${BASE_PATH:-/}
+    volumes:
+      - .:/app
+      - /app/node_modules
+    init: true
+
+  production:
+    profiles: [production]
+    build:
+      context: .
+      target: production
+      args:
+        SITE_URL: ${SITE_URL:-http://localhost:8080}
+        BASE_PATH: ${BASE_PATH:-/}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
