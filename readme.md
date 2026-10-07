@@ -82,14 +82,28 @@ Stop the services with `docker compose --profile production down`.
 ## GitHub Pages
 
 1. Push this repository and workflow to `main`.
-2. In **Settings → Pages → Build and deployment**, select **GitHub Actions**.
-3. The `Deploy documentation to GitHub Pages` workflow builds and publishes `dist/`.
+2. In **Settings → Pages → Build and deployment → Source**, select **GitHub Actions**, not **Deploy from a branch**.
+   The Astro workflow already exists; do not create a Jekyll template.
+3. In **Actions**, open **Deploy documentation to GitHub Pages**, select **Run workflow**, choose `main`, and run it.
+4. The workflow builds Astro and publishes only the compiled `dist/` artifact, never the repository root or `website/src/`.
 
 Deployment runs on pushes to `main`, manually via **Actions → Run workflow**, and daily at 04:23 UTC
 to pick up upstream documentation changes. Scheduled runs use the repository's default branch.
 If you rename the deployment branch, update the workflow's push filter.
 GitHub Pages metadata supplies `SITE_URL` and `BASE_PATH`, including project sub-paths and configured custom domains.
 For a custom domain, configure **Settings → Pages → Custom domain** and its DNS records first.
+
+### Jekyll reports "Invalid YAML front matter" in an `.astro` file
+
+An `.astro` file contains JavaScript between `---` delimiters, not YAML front matter.
+Logs mentioning `github-pages`, `jekyll`, and a source directory of `/github/workspace/.`
+show that Jekyll is building the source repository instead of publishing the Astro artifact.
+Switch the Pages **Source** to **GitHub Actions**, then run **Deploy documentation to GitHub Pages** as above.
+Re-running the failed Jekyll job will not fix the publishing mode.
+
+Do not rewrite the Astro front matter as YAML or add `.nojekyll` to the repository root as a workaround:
+skipping Jekyll still does not compile the Astro source into a website.
+Changing the publishing mode requires repository settings permissions; the workflow cannot switch it with its read-only Pages permission.
 
 You can exercise the project-pages URL layout locally:
 
