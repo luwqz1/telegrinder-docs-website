@@ -20,7 +20,6 @@ const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const FRAME_MS = 52;
 const items = new WeakMap<HTMLElement, Item>();
 
-const onebit = () => document.documentElement.hasAttribute("data-onebit");
 const tokens = () => {
   const cs = getComputedStyle(document.documentElement);
   return { ink: cs.getPropertyValue("--ink").trim(), accent: cs.getPropertyValue("--accent").trim() };
@@ -130,10 +129,6 @@ export async function morph(el: HTMLElement, to: View, animate = true): Promise<
   it.view = to;
   // Already on screen: this also cancels a morph still waiting for its image.
   if (it.el.dataset.view === to) return;
-  if (onebit()) {
-    show(it, "pixel");
-    return;
-  }
   if (!(await loaded(it.img)) || run !== it.run) {
     if (run === it.run) show(it, to === "glass" && it.img.naturalWidth ? "glass" : "pixel");
     return;
@@ -203,7 +198,7 @@ export function initGlassPixels() {
     for (const entry of entries) {
       if (!entry.isIntersecting) continue;
       warm.unobserve(entry.target);
-      if (!onebit()) item(entry.target as HTMLElement).img.loading = "eager";
+      item(entry.target as HTMLElement).img.loading = "eager";
     }
   }, { rootMargin: "400px" });
 
@@ -247,12 +242,11 @@ export function initGlassPixels() {
 
   follow(turning);
 
-  // Theme switches change ink and accent; 1-bit has no glass at all.
+  // Theme switches change ink and accent.
   addEventListener("theme:change", () => {
     for (const el of all) {
       const it = item(el);
-      if (onebit()) show(it, "pixel");
-      else show(it, it.view);
+      show(it, it.view);
     }
   });
 }

@@ -20,7 +20,7 @@ const groups = [
 ];
 const isCurrent = (key: string) => current === key || (key === "changelog/index" && current.startsWith("changelog/"));
 const langHref = (target: Lang) => (target === lang ? href(lang, "") : alternate.href);
-const themes = ["auto", "light", "dark", "onebit"] as const;
+const themes = ["auto", "light", "dark"] as const;
 ---
 
 <aside class="rail">
@@ -47,10 +47,8 @@ const themes = ["auto", "light", "dark", "onebit"] as const;
     <div class="cells" role="group" aria-label={s.lang}>
       <a class="cell" href={langHref("en")} hreflang="en" aria-current={lang === "en" ? "true" : undefined}>EN</a>
       <a class="cell" href={langHref("ru")} hreflang="ru" aria-current={lang === "ru" ? "true" : undefined}>RU</a>
-      <a class="cell" href="https://github.com/timoniq/telegrinder" target="_blank" rel="noopener">{s.github}</a>
-      <a class="cell" href="https://t.me/botoforum" target="_blank" rel="noopener">{s.forum}</a>
     </div>
-    <div class="cells" role="group" aria-label={s.themeLabel}>
+    <div class="cells theme-controls" role="group" aria-label={s.themeLabel}>
       {
         themes.map((t) => (
           <button class="cell theme-cell" type="button" data-theme-choice={t} aria-pressed="false">
@@ -58,6 +56,10 @@ const themes = ["auto", "light", "dark", "onebit"] as const;
           </button>
         ))
       }
+    </div>
+    <div class="cells" role="group" aria-label={`${s.github}, ${s.forum}`}>
+      <a class="cell" href="https://github.com/timoniq/telegrinder" target="_blank" rel="noopener">{s.github}</a>
+      <a class="cell" href="https://t.me/botoforum" target="_blank" rel="noopener">{s.forum}</a>
     </div>
   </div>
 </aside>

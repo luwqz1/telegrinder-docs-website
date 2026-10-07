@@ -1,4 +1,21 @@
-import type { PageScenes } from "../render/chat";
+import type { Button, PageScenes, Step } from "../render/chat";
+
+function numericKeyboard(kind: "reply" | "inline", handler: "none" | "one" | "all"): Button[][] {
+  const buttons = ["1", "2", "3"].map((t): Button => {
+    const handled = handler === "all" || (handler === "one" && t === "1");
+    if (!handled) return { t };
+    const response: Step = kind === "reply" ? { b: "Ты нажал кнопку 1" } : { toast: `Нажата кнопка ${t}` };
+    return { t, action: kind === "reply" ? [{ u: t }, response] : [response] };
+  });
+  return [[buttons[0], buttons[1]], [buttons[2]]];
+}
+
+function fruitsKeyboard(handled: boolean): Button[][] {
+  return [["Apple", "Banana"], ["Kiwi"]].map((row) => row.map((t): Button => {
+    if (!handled || t !== "Apple") return { t };
+    return { t, action: [{ u: t }, { kb: null }, { b: "Отличный выбор" }] };
+  }));
+}
 
 // Ключи — ключи страниц, внутренние ключи — номер блока кода в главе.
 // Ответы должны совпадать с тем, что реально вернёт код из главы.
@@ -36,24 +53,24 @@ export const scenes: Record<string, PageScenes> = {
     6: [{ sys: "bot.on.load(admin)" }, { u: "/ban" }, { b: "Admin action" }],
   },
   "tutorial/7_keyboard": {
-    1: [{ u: "/keyboard" }, { b: "Вот клавиатура" }, { kb: [["1", "2"], ["3"]] }],
-    2: [{ kb: [["1", "2"], ["3"]] }, { press: "1" }, { u: "1" }, { b: "Ты нажал кнопку 1" }],
-    4: [{ u: "/eat" }, { b: "Что съесть?" }, { kb: [["Apple", "Banana"], ["Kiwi"]] }],
-    5: [
-      { u: "/eat" }, { b: "Что съесть?" }, { kb: [["Apple", "Banana"], ["Kiwi"]] },
-      { press: "Apple" }, { u: "Apple" }, { kb: null }, { b: "Отличный выбор" },
-    ],
+    1: [{ u: "/keyboard" }, { b: "Вот клавиатура" }, { kb: numericKeyboard("reply", "none") }],
+    2: [{ kb: numericKeyboard("reply", "one") }],
+    4: [{ u: "/eat" }, { b: "Что съесть?" }, { kb: fruitsKeyboard(false) }],
+    5: [{ u: "/eat" }, { b: "Что съесть?" }, { kb: fruitsKeyboard(true) }],
     6: [
       { sys: "MenuKeyboard.get_markup()" },
-      { kb: [[{ t: "Profile", s: "success" }, { t: "Balance", s: "primary" }], [{ t: "Exit", s: "danger" }]] },
+      { kb: [
+        [
+          { t: "Profile", s: "success" },
+          { t: "Balance", s: "primary" },
+        ],
+        [{ t: "Exit", s: "danger" }],
+      ] },
     ],
-    8: [{ u: "/inline_keyboard" }, { b: "Вот инлайн-клавиатура", inline: [["1", "2"], ["3"]] }],
-    9: [{ u: "/inline_keyboard" }, { b: "Вот инлайн-клавиатура", inline: [["1", "2"], ["3"]] }, { press: "1" }, { toast: "Нажата кнопка 1" }],
-    11: [
-      { b: "Вот инлайн-клавиатура", inline: [["1", "2"], ["3"]] },
-      { press: "3" }, { toast: "Нажата кнопка 3" }, { press: "2" }, { toast: "Нажата кнопка 2" },
-    ],
-    13: [{ b: "🍩", inline: [["Buy doughnut"]] }, { press: "Buy doughnut" }, { edit: "You bought doughnut for 100" }],
+    8: [{ u: "/inline_keyboard" }, { b: "Вот инлайн-клавиатура", inline: numericKeyboard("inline", "none") }],
+    9: [{ u: "/inline_keyboard" }, { b: "Вот инлайн-клавиатура", inline: numericKeyboard("inline", "one") }],
+    11: [{ b: "Вот инлайн-клавиатура", inline: numericKeyboard("inline", "all") }],
+    13: [{ b: "🍩", inline: [[{ t: "Buy doughnut", action: [{ edit: "You bought doughnut for 100" }] }]] }],
   },
   "tutorial/8_text": {
     0: [
@@ -81,15 +98,24 @@ export const scenes: Record<string, PageScenes> = {
     ],
     3: [
       { u: "/choice" },
-      { b: "Choose something", inline: [["Apple 🔴"], ["Banana 🟢"], ["Pear 🔴"], ["Ready"]] },
-      { press: "Apple 🔴" }, { relabel: { "Apple 🔴": "Apple 🟢", "Banana 🟢": "Banana 🔴" } },
-      { press: "Ready" }, { edit: "You chose: apple" },
+      { b: "Choose something", selection: {
+        kind: "choice", picked: ["banana"], ready: "Ready", resultPrefix: "You chose: ",
+        options: [
+          [{ value: "apple", label: "Apple 🔴", selectedLabel: "Apple 🟢" }],
+          [{ value: "banana", label: "Banana 🔴", selectedLabel: "Banana 🟢" }],
+          [{ value: "pear", label: "Pear 🔴", selectedLabel: "Pear 🟢" }],
+        ],
+      } },
     ],
     4: [
       { u: "/checkbox" },
-      { b: "Check your checkbox", inline: [["Apple", "Banana 🍌"], ["Pear"], ["Ready", "Cancel"]] },
-      { press: "Apple" }, { relabel: { Apple: "Apple 🍏" } },
-      { press: "Ready" }, { edit: "You picked: apple, banana" },
+      { b: "Check your checkbox", selection: {
+        kind: "checkbox", picked: ["banana"], ready: "Ready", cancel: "Cancel", resultPrefix: "You picked: ",
+        options: [
+          [{ value: "apple", label: "Apple", selectedLabel: "Apple 🍏" }, { value: "banana", label: "Banana", selectedLabel: "Banana 🍌" }],
+          [{ value: "pear", label: "Pear", selectedLabel: "Pear 🍐" }],
+        ],
+      } },
     ],
     6: [
       { u: "/die" }, { b: "Теперь ты мёртв, причина: sadness" },

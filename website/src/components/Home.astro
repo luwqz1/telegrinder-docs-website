@@ -1,9 +1,9 @@
 ---
-import Chat from "./Chat.astro";
 import { BOT_API, PYTHON, README_EXAMPLE, VERSION, href, pages, tutorialChapters } from "../docs/content";
 import { type Lang, T } from "../docs/i18n";
 import { glassIcon, glassMark, iconFor } from "../render/glass";
-import { renderMarkdown } from "../render/markdown";
+import { chatStrings, renderMarkdown } from "../render/markdown";
+import { transcript } from "../render/chat";
 import { scenes as en } from "../scenes/en";
 import { scenes as ru } from "../scenes/ru";
 
@@ -14,7 +14,8 @@ interface Props {
 const { lang } = Astro.props;
 const s = T[lang];
 const homeScenes = (lang === "ru" ? ru : en).home;
-const demo = renderMarkdown("```python\n" + README_EXAMPLE + "\n```", { lang, file: "index.md", strings: s, scenes: homeScenes });
+const demo = renderMarkdown("```python\n" + README_EXAMPLE + "\n```", { lang, file: "index.md", strings: s });
+const dialog = transcript(homeScenes[0], chatStrings(s));
 const chapters = tutorialChapters(lang);
 const more = pages(lang).filter((p) => p.inNav && p.section !== "tutorial");
 const facts = [
@@ -31,8 +32,8 @@ const facts = [
     <h1 class="wordmark">telegrinder</h1>
     <p>{s.tagline}</p>
     <div class="install">
-      <b>$</b>uv add telegrinder
-      <button class="copy" type="button" data-copy="uv add telegrinder" data-done={s.copied} data-fail={s.copyFailed}>{s.copy}</button>
+      <b>$</b>pip install telegrinder
+      <button class="copy" type="button" data-copy="pip install telegrinder" data-done={s.copied} data-fail={s.copyFailed}>{s.copy}</button>
     </div>
     <dl class="facts">
       {
@@ -52,7 +53,7 @@ const facts = [
   <p>{s.demoText}</p>
   <div class="demo">
     <div class="prose demo-code" set:html={demo.html} />
-    <Chat lang={lang} scenes={homeScenes} class="chat-home" />
+    <div class="chat-inline" role="log" aria-label={s.chatName} set:html={dialog} />
   </div>
 </section>
 

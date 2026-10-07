@@ -45,7 +45,6 @@ const masks = `--mask-strands:${MASKS.strands};--mask-rule:${MASKS.rule};--mask-
         try {
           const theme = localStorage.getItem("telegrinder-docs:theme");
           if (theme === "light" || theme === "dark") root.setAttribute("data-theme", theme);
-          if (theme === "onebit") root.setAttribute("data-onebit", "");
           if (sessionStorage.getItem("telegrinder-docs:arrive")) {
             sessionStorage.removeItem("telegrinder-docs:arrive");
             root.classList.add("is-arriving");

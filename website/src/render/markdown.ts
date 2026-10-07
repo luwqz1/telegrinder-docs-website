@@ -1,6 +1,6 @@
 // Markdown → HTML for the docs, at build time.
 // marked handles structure, Shiki tokenises code; token colours are emitted as classes,
-// so light, dark and 1-bit themes restyle code without re-rendering.
+// so light and dark themes restyle code without re-rendering.
 import path from "node:path";
 
 import { Marked, type Tokens } from "marked";
@@ -8,7 +8,7 @@ import { createHighlighter, type ThemeRegistration } from "shiki";
 
 import { REPO_BLOB, href, keyForFile, page as findPage, withBase } from "../docs/content";
 import type { Lang, Strings } from "../docs/i18n";
-import { type ChatStrings, type PageScenes, esc, transcript } from "./chat";
+import { type ChatStrings, type PageScenes, chatContents, esc, transcript } from "./chat";
 import { glassIcon } from "./glass";
 
 // Sentinel colours: Shiki resolves scopes to these, and we map them back to class names.
@@ -50,7 +50,6 @@ const ALIAS: Record<string, (typeof LANGS)[number]> = {
   bash: "shellscript", sh: "shellscript", shell: "shellscript", console: "shellscript", zsh: "shellscript",
   json: "json", yaml: "yaml", yml: "yaml", toml: "toml", html: "html",
 };
-const LABEL: Record<string, string> = { python: "py", shellscript: "sh", json: "json", yaml: "yaml", toml: "toml", html: "html" };
 
 const highlighter = await createHighlighter({ themes: [PIXEL_THEME], langs: [...LANGS] });
 
@@ -137,11 +136,15 @@ export function renderMarkdown(markdown: string, opts: RenderOptions): Rendered 
         const raw = (tok.lang ?? "").trim().split(/\s+/)[0].toLowerCase();
         const lang = ALIAS[raw];
         const body = lang ? highlight(tok.text, lang) : esc(tok.text);
-        const label = lang ? LABEL[lang] : raw || "txt";
         const steps = opts.scenes?.[i];
         const scene = steps ? ` has-scene" title="${esc(s.sceneHint)}` : "";
-        let html = `<figure class="code${scene}" data-i="${i}"><figcaption>${esc(label)}</figcaption><pre><code>${body}</code></pre><button class="copy" type="button" aria-label="${esc(s.copyLabel)}" data-done="${esc(s.copied)}" data-fail="${esc(s.copyFailed)}">${esc(s.copy)}</button></figure>`;
-        if (steps) html += `<div class="chat-inline" aria-hidden="true">${transcript(steps, chatStrings(s))}</div>`;
+        let html = `<figure class="code${scene}" data-i="${i}"><pre><code>${body}</code></pre><button class="copy" type="button" aria-label="${esc(s.copyLabel)}" data-done="${esc(s.copied)}" data-fail="${esc(s.copyFailed)}">${esc(s.copy)}</button></figure>`;
+        if (steps) {
+          const interactive = steps.some((step) => ("kb" in step && step.kb !== null) || ("b" in step && Boolean(step.inline || step.selection)));
+          html += interactive
+            ? `<aside class="chat-inline" aria-label="${esc(s.chatName)}" data-chat data-i="${i}">${chatContents({ [i]: steps }, s)}</aside>`
+            : `<div class="chat-inline" aria-hidden="true">${transcript(steps, chatStrings(s))}</div>`;
+        }
         return html;
       },
       heading(tok: Tokens.Heading) {

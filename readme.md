@@ -116,7 +116,7 @@ Open `http://localhost:4321/REPOSITORY/`.
 
 ## What gets built
 
-- `/` and `/ru/`: home with the README example running in the demo chat.
+- `/` and `/ru/`: home with the full-width README example and a static `/start` conversation below it, without a Replay window.
 - `/tutorial/<chapter>/` and `/ru/tutorial/<chapter>/`: every file in `docs/tutorial/<lang>/`.
 - `/tools/…`, `/api/`, `/changelog/…`, `/community/`: English content, available under both UIs.
 
@@ -127,7 +127,7 @@ GitHub alerts (`> [!TIP]`) are supported.
 
 ## Demo chat scenes
 
-When a code block reaches the middle of the screen, the chat next to it plays what that code does.
+On tutorial pages, when a code block reaches the middle of the screen, the chat next to it plays what that code does.
 Scenes live in `website/src/scenes/en.ts` and `website/src/scenes/ru.ts`, keyed by page and by the zero-based index of the
 fenced block in the chapter. These hand-written UI animations are not documentation content:
 
@@ -137,9 +137,27 @@ fenced block in the chapter. These hand-written UI animations are not documentat
 },
 ```
 
-Step kinds: `u` user message, `b` bot message (`inline` buttons, `reply` quote, `html`), `sys` dispatcher note,
-`kb` reply keyboard, `press`, `toast`, `edit`, `relabel`, `del`, `sticker`, `photo`, `album`.
+Step kinds: `u` user message, `b` bot message (`inline` buttons, `selection`, `reply` quote, `html`), `sys` dispatcher note,
+`kb` reply keyboard, `toast`, `edit`, `del`, `sticker`, `photo`, `album`.
 Replies must match what the chapter's code returns. If a chapter gains or loses a code block, check the indices.
+
+Demos have no text-input field. Keyboard scenes play their opening messages automatically.
+Buttons carry a label `t`, an optional style `s`, and an optional `action` containing the steps to play on click:
+
+```ts
+{ b: "Here is your inline keyboard", inline: [
+  [{ t: "1", action: [{ toast: "Button 1 pressed" }] }],
+] }
+```
+
+`selection` configures a `choice` or `checkbox` with option rows, initial `picked` values, `ready`/`cancel` labels,
+and a `resultPrefix`. Choices update their labels and pressed state; completion edits the original message.
+Replay resets both the conversation and the selection. Clicking during playback cancels the previous response.
+Keyboard scenes also remain interactive below their code blocks on narrow screens; other mobile previews are static.
+Buttons without an `action` are disabled. Keyboard-definition and sending-only examples are display-only;
+handler examples enable only the matching buttons, without inventing responses for the others.
+Reduced-motion mode skips animation delays but keeps callback toasts readable.
+The dialog keeps its frame and layout while typing; the typing bubble has separate styles from the dialog's typing state.
 
 ## Glass and pixels
 
@@ -157,8 +175,18 @@ always covers the central 80 % of the frame; the morph in `website/src/scripts/g
 
 ## Themes
 
-Auto, light, dark and 1-bit. 1-bit collapses every grey to black or white and shows pixels only.
+Auto, light and dark. Auto follows the system color scheme; unrecognized stored choices fall back to Auto.
 The choice is stored in `localStorage` and applied before first paint.
+The sidebar footer has three rows: languages, theme choices, then GitHub and Forum links.
+
+Panels use distinct `--surface` backgrounds and two-pixel `--border` outlines.
+The wordmark scales with its column; prose and chapter-navigation labels wrap without widening the page.
+On narrow phones, chapter navigation switches to a single column.
+Long documentation code examples scroll inside their own blocks; the home example wraps long lines instead.
+Documentation links keep a transparent background on hover and switch to a solid underline.
+Alert icons morph in place when hovering anywhere on the alert; decorative icons do not inherit documentation-image margins or frames.
+Page-transition pixels and the arrival cover use `--paper`, not the text color, to avoid bright flashes in dark mode.
+Transitions are skipped with `prefers-reduced-motion`.
 
 ## License
 [MIT](./license)

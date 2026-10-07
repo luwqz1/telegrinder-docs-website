@@ -7,22 +7,20 @@ const THEME_KEY = "telegrinder-docs:theme";
 const ARRIVE_KEY = "telegrinder-docs:arrive";
 
 // ------------------------------------------------------------------ theme
-type Theme = "auto" | "light" | "dark" | "onebit";
+type Theme = "auto" | "light" | "dark";
 
 function storedTheme(): Theme {
   try {
     const t = localStorage.getItem(THEME_KEY);
-    return t === "light" || t === "dark" || t === "onebit" ? t : "auto";
+    return t === "light" || t === "dark" ? t : "auto";
   } catch {
     return "auto";
   }
 }
 
 function applyTheme(theme: Theme) {
-  root.removeAttribute("data-onebit");
   root.removeAttribute("data-theme");
   if (theme === "light" || theme === "dark") root.setAttribute("data-theme", theme);
-  if (theme === "onebit") root.setAttribute("data-onebit", "");
   for (const b of document.querySelectorAll<HTMLElement>("[data-theme-choice]")) b.setAttribute("aria-pressed", String(b.dataset.themeChoice === theme));
   dispatchEvent(new Event("theme:change"));
 }
@@ -76,7 +74,7 @@ function dither(levels: number[], done: () => void) {
   canvas.height = rows;
   const ctx = canvas.getContext("2d")!;
   const probe = document.createElement("canvas").getContext("2d")!;
-  probe.fillStyle = getComputedStyle(root).getPropertyValue("--ink").trim() || "#000";
+  probe.fillStyle = getComputedStyle(root).getPropertyValue("--paper").trim() || "#0d0d0f";
   probe.fillRect(0, 0, 1, 1);
   const [r, g, b] = probe.getImageData(0, 0, 1, 1).data;
   const image = ctx.createImageData(cols, rows);
